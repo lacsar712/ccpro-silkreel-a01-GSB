@@ -3,7 +3,7 @@ from datetime import timedelta
 from sqlalchemy import select
 
 from app.db import SessionLocal
-from app.models import Basin, BathReading, Filature, User, utcnow
+from app.models import Basin, BathReading, Filature, PenetrationTicket, User, utcnow
 from app.security import hash_password
 
 
@@ -35,16 +35,17 @@ async def seed_demo() -> None:
         session.add(mill)
         await session.flush()
         now = utcnow()
+        # (code, status, temp, ring_index, vacuum) — vacuum 非 None 时补一张渗透单
         specs = [
-            ("甲-1", Basin.STATUS_REELING, 40.5, 0),
-            ("甲-2", Basin.STATUS_SOAKING, None, 1),
-            ("乙-1", Basin.STATUS_REELED, 39.2, 2),
-            ("乙-2", Basin.STATUS_REELING, 36.0, 3),
-            ("丙-1", Basin.STATUS_SOAKING, None, 4),
-            ("丙-2", Basin.STATUS_REELED, 41.0, 5),
+            ("甲-1", Basin.STATUS_REELING, 40.5, 0, None),
+            ("甲-2", Basin.STATUS_SOAKING, None, 1, None),
+            ("乙-1", Basin.STATUS_REELED, 39.2, 2, 0.09),
+            ("乙-2", Basin.STATUS_REELING, 36.0, 3, 0.10),
+            ("丙-1", Basin.STATUS_SOAKING, None, 4, None),
+            ("丙-2", Basin.STATUS_REELED, 41.0, 5, 0.06),
         ]
-        for code, status, temp, idx in specs:
-            basin = Basin(filature_id=mill.id, code=code, status=status, ring_index=idx)
+        for idx, (code, status, temp, ring, vacuum) in enumerate(specs):
+            basin = Basin(filature_id=mill.id, code=code, status=status, ring_index=ring)
             session.add(basin)
             await session.flush()
             if temp is not None:
@@ -54,6 +55,16 @@ async def seed_demo() -> None:
                         water_temp_c=temp,
                         operator="worker",
                         taken_at=now - timedelta(hours=2),
+                    )
+                )
+            if vacuum is not None:
+                session.add(
+                    PenetrationTicket(
+                        basin_id=basin.id,
+                        slip_no=1,
+                        vacuum=vacuum,
+                        operator="worker",
+                        penetrated_at=now - timedelta(hours=1),
                     )
                 )
         await session.commit()

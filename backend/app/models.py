@@ -1,7 +1,17 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql import text
 
 
 def utcnow() -> datetime:
@@ -46,6 +56,7 @@ class Basin(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     filature: Mapped[Filature] = relationship(back_populates="basins")
     readings: Mapped[list["BathReading"]] = relationship(back_populates="basin")
+    tickets: Mapped[list["PenetrationTicket"]] = relationship(back_populates="basin")
 
 
 class BathReading(Base):
@@ -57,3 +68,31 @@ class BathReading(Base):
     water_temp_c: Mapped[float] = mapped_column(Float)
     operator: Mapped[str] = mapped_column(String(64), default="")
     basin: Mapped[Basin] = relationship(back_populates="readings")
+
+
+class PenetrationTicket(Base):
+    """渗透合格单：按盆编号，从 1 起；同盆未作废单号不得撞车。"""
+
+    __tablename__ = "penetration_tickets"
+    __table_args__ = (
+        # 只对未作废单生效：同盆同号在库里至多一张有效单。
+        Index(
+            "uq_penetration_active_basin_no",
+            "basin_id",
+            "slip_no",
+            unique=True,
+            postgresql_where=text("voided_at IS NULL"),
+            sqlite_where=text("voided_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    basin_id: Mapped[int] = mapped_column(ForeignKey("basins.id"))
+    slip_no: Mapped[int] = mapped_column(Integer)
+    vacuum: Mapped[float] = mapped_column(Float)
+    penetrated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    operator: Mapped[str] = mapped_column(String(64), default="")
+    voided_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+    basin: Mapped[Basin] = relationship(back_populates="tickets")

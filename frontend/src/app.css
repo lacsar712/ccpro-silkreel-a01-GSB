@@ -58,6 +58,76 @@ button, input {
   margin: 4px 6px 4px 0;
 }
 .err { color: #b42318; }
+.ok { color: #3f6f4a; font-weight: 600; }
+.warn { color: #b3541e; }
 .hint { color: #6b5a48; font-size: 0.92em; }
 label { display: block; margin: 8px 0; }
-.topbar { display: flex; justify-content: space-between; align-items: baseline; }
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e4d8bf;
+  padding-bottom: 10px;
+}
+.nav { display: flex; gap: 4px; }
+.navbtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.navbtn.active {
+  background: #fff;
+  border-color: #e4d8bf;
+  color: #8a6d1a;
+  font-weight: 600;
+}
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.who { color: #6b5a48; font-size: 0.92em; margin-right: 4px; }
+.heading { margin: 12px 0; }
+.heading h1 { margin: 0 0 4px; }
+.heading p { margin: 0; color: #5a4f42; }
+.heading a { color: #8a6d1a; }
+.ticket-dot {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 0 5px;
+}
+.ticket-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  background: #fff;
+  border: 1px solid #e4d8bf;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.ticket-form label { margin: 0; font-size: 0.92em; }
+.ticket-form input,
+.ticket-form select { display: block; margin-top: 4px; }
+.ticket-filter { margin: 14px 0 6px; }
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e4d8bf;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.ticket-table th,
+.ticket-table td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid #f0e8d6;
+  font-size: 0.94em;
+}
+.ticket-table th { background: #f7efdc; }
+.ticket-table tr.voided { color: #9a8d78; text-decoration: line-through; }
+.ticket-table .empty { text-align: center; color: #8a7d68; }
+.void-btn { color: #b42318; border-color: #d9a8a2; }
