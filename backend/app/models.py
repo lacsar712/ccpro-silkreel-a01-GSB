@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -46,6 +46,7 @@ class Basin(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     filature: Mapped[Filature] = relationship(back_populates="basins")
     readings: Mapped[list["BathReading"]] = relationship(back_populates="basin")
+    slips: Mapped[list["PenetrationSlip"]] = relationship(back_populates="basin")
 
 
 class BathReading(Base):
@@ -57,3 +58,27 @@ class BathReading(Base):
     water_temp_c: Mapped[float] = mapped_column(Float)
     operator: Mapped[str] = mapped_column(String(64), default="")
     basin: Mapped[Basin] = relationship(back_populates="readings")
+
+
+class PenetrationSlip(Base):
+    """渗透合格单：一盆一单一号，未作废单号在同盆内唯一（部分唯一索引兜底并发）。"""
+
+    __tablename__ = "penetration_slips"
+    __table_args__ = (
+        Index(
+            "uq_penetration_slips_live_no",
+            "basin_id",
+            "slip_no",
+            unique=True,
+            postgresql_where=text("voided_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    basin_id: Mapped[int] = mapped_column(ForeignKey("basins.id"))
+    slip_no: Mapped[int] = mapped_column(Integer)
+    vacuum_degree: Mapped[float] = mapped_column(Float)
+    penetrated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    operator: Mapped[str] = mapped_column(String(64), default="")
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    basin: Mapped[Basin] = relationship(back_populates="slips")
